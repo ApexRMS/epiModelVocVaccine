@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package
+  name="epiModelVocVaccine"
+  displayName="VOC + Vaccine Model"
+  isAddOn="True"
+  extendsPackage="epi"
+  version="1.0.0">
+  <transformers>
+    <transformer
+      name="Model"
+      isPrimary="True"
+      displayName="VOC + Vaccine Model: Run Model"
+      className="SyncroSim.StochasticTime.StochasticTimeTransformer"
+      classAssembly="SyncroSim.StochasticTime"
+      configurationSheet="RunSettings"
+      programName="Rscript"
+      programArguments="model.R"
+      isRunnable ="True">
+      <datafeeds>
+        <datafeed name="RunSettings" displayName="Run Settings" dataScope="Scenario">
+          <datasheets>
+            <datasheet name="RunSettings" displayName="Run Settings" isSingleRow="True">
+              <columns>
+                <column name="RunSettingsID" dataType="Integer" isPrimary="True"/>
+                <column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
+                <column name="RegressionWindow" displayName="Regression start date (yyyy-mm-dd)" dataType="Date" validationType="Date"/>
+                <column name="MinimumTimestep" displayName="Regression end date (yyyy-mm-dd)" dataType="Date" validationType="Date"/>
+                <column name="MaximumTimestep" displayName="Projection end date (yyyy-mm-dd)" dataType="Date" validationType="Date"/>
+                <column name="MinimumIteration" dataType="Integer" isVisible="False" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>                
+                <column name="MaximumIteration" dataType="Integer" displayName="Iterations" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>
+                <column name="Breakpoints" dataType="Integer" displayName="Number of breakpoints" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>
+                <column name="VaccineEfficacy" displayName="Vaccine efficacy" dataType="Double"/> validationType="Decimal" validationCondition="LessEqual" formula1="1" />
+                <column name="ImmunityDelay" dataType="Integer" displayName="Immunity delay" defaultValue="0" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="0" format="d"/>
+                <column name="VocAdvantage" displayName="VOC advantage" dataType="Double"/> validationType="Decimal" validationCondition="LessEqual" formula1="1" />
+                <column name="VocShare" displayName="VOC case proportion" dataType="Double"/> validationType="Decimal" validationCondition="LessEqual" formula1="1" />
+                <column name="VocShareDate" displayName="VOC case proportion date (yyyy-mm-dd)" dataType="Date" validationType="Date"/>
+              </columns>
+              <defaultRecords>
+                <record columns="RegressionWindow|MinimumTimestep|MaximumIteration|Breakpoints|VaccineEfficacy|ImmunityDelay|VocAdvantage|VocShare|VocShareDate" values="2020-10-10|2021-05-03|20|3|0.8|10|0.07224557|0.1737582|2021-03-11"/>
+              </defaultRecords>
+            </datasheet>
+          </datasheets>
+        </datafeed>
+        <datafeed name="RunJurisdictions" displayName="Jurisdictions" dataScope="Scenario">
+          <datasheets>
+            <datasheet name="RunJurisdictions" displayName="Jurisdictions">
+              <columns>
+                <column name="RunJurisdictionsID" dataType="Integer" isPrimary="True"/>
+                <column name="ScenarioID" dataType="Integer"/>
+                <column name="Jurisdictions" dataType="Integer" validationType="Datasheet" formula1="epi_Jurisdiction" allowDbNull="False"/>
+              </columns>
+              <validations>
+                <validation validationType="Unique" columns="Jurisdictions"/>
+              </validations>
+            </datasheet>
+          </datasheets>
+        </datafeed>
+        <datafeed name="VaccinationRates" displayName="Vaccination Rates" dataScope="Scenario">
+          <datasheets>
+            <datasheet name="VaccinationRates" displayName="Vaccination Rates">
+              <columns>
+                <column name="VaccinationRatesID" dataType="Integer" isPrimary="True"/>
+                <column name="ScenarioID" dataType="Integer"/>
+                <column name="Jurisdictions" dataType="Integer" validationType="Datasheet" formula1="epi_Jurisdiction" isOptional="True"/>
+                <column name="Date" dataType="Date"/>
+                <column name="Rate" displayName="Vaccination rate" dataType="Double"/> validationType="Decimal" validationCondition="LessEqual" formula1="1" />
+              </columns>
+              <defaultRecords>
+                <record columns="Date|Rate" values="2020-12-29|0.00115"/>
+                <record columns="Date|Rate" values="2021-03-01|0.0408"/>
+                <record columns="Date|Rate" values="2021-03-20|0.102"/>
+                <record columns="Date|Rate" values="2021-05-12|0.455"/>
+                <record columns="Date|Rate" values="2021-07-01|0.9"/>
+              </defaultRecords>
+            </datasheet>
+          </datasheets>
+        </datafeed>
+      </datafeeds>
+      <pipeline>
+        <datafeed name="RunSettings"/>
+        <datafeed name="RunJurisdictions"/>
+        <datafeed name="VaccinationRates"/>
+        <datafeed name="epi_DataSummary"/>
+      </pipeline>
+    </transformer>
+  </transformers>
+  <layouts>
+    <layout name="coreforms_ScenarioDatafeeds">
+      <group name="regressionModel" displayName="Case Regression Model" appendTo="epi_Models">
+        <group name="ModelInputs" displayName="Inputs">
+          <item name="RunSettings" itemTransformer="Model" showIf="isEither"/>
+          <item name="RunJurisdictions" itemTransformer="Model" showIf="isEither"/>
+          <item name="VaccinationRates" itemTransformer="Model" showIf="isEither"/>
+          <item
+            name="epi_DataSummary"
+            displayName="Cases"
+            showIf="isEither"
+            transformerFilter="!Model"            
+            viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
+            viewClassAssembly="SyncroSim.Core.Forms"
+            filterTransformer="!Model"
+            itemTransformer="Model" />
+        </group>
+        <item
+          name="epi_DataSummary"
+          displayName="Results"
+          showIf="isResult"
+          viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
+          viewClassAssembly="SyncroSim.Core.Forms"      
+          filterTransformer="Model"
+          itemTransformer="Model"/>
+      </group>
+    </layout>
+  </layouts>
+</package>
