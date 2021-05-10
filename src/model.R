@@ -69,26 +69,38 @@ if(is.na(runSettings$MaximumTimestep))
     `+`(28) %>%
     format("%Y-%m-%d")
 
-# Find the cumulative number of cases at the start of the regression window
-initialCumulative <- inputData %>%
-  filter(
-    TransformerID == sourceTransformer,
-    Variable == "Cases - Cumulative",
-    Timestep == runSettings$RegressionWindow) %>%
-  pull(Value)
+# Save run settings back to SyncroSim
+saveDatasheet(myScenario, runSettings, "epiModelVocVaccine_RunSettings")
 
-# Default to zero if cumulative cases data is not found
-if(length(initialCumulative) == 0)
-  initialCumulative <- 0
+# Find the cumulative number of cases at the start of the regression window
+initialCumulative <- 
+  map_dbl(jurisdictions,
+    ~{
+      initialCumulativeJurisdiction <- inputData %>%
+        filter(
+          TransformerID == sourceTransformer,
+          Jurisdiction == .x,
+          Variable == "Cases - Cumulative",
+          Timestep == runSettings$RegressionWindow) %>%
+        pull(Value) %>%
+        head(1)
+      
+      # Default to zero if cumulative cases data is not found
+      if(length(initialCumulativeJurisdiction) == 0)
+        initialCumulativeJurisdiction <- 0
+      
+      return(initialCumulativeJurisdiction)
+    })
 
 ## Find and source the model ----
 source(file.path(packagePath, "voc_vaccines.R"))
     
 # Run model ----
 outputData <- 
-  map_dfr(
+  try(map2_dfr(
     jurisdictions,
-    function(jurisdiction) {
+    initialCumulative,
+    function(jurisdiction, initialCumulativeJurisdiction) {
       # Pull out the relevant vaccination rates for this jurisdiction
       jurisdictionVaccinationRates <- vaccinationRates %>%
           filter(is.na(Jurisdictions) | Jurisdictions == jurisdiction) %>%
@@ -110,10 +122,15 @@ outputData <-
         num_breakpoints = runSettings$Breakpoints,
         minimumIteration = runSettings$MinimumIteration,
         maximumIteration = runSettings$MaximumIteration,
-        initialCumulative = initialCumulative)
+        initialCumulative = initialCumulativeJurisdiction)
       }) %>%
   filter(TransformerID == transformerName) %>%
   select(TransformerID, Iteration, Timestep, Variable, Jurisdiction, Value) %>%
-  as.data.frame()
+  as.data.frame())
+
+if(class(outputData) == "try-error")
+  case_when(
+    grepl("Est.", outputData[1]) ~ stop("Could not estimate breakpoints for one or more jurisdictions. Please change the number of breakpoints you would like to estimate."),
+    TRUE ~ stop("Unexpected error encountered while running the VOC and Vaccine model."))
 
 saveDatasheet(myScenario, outputData, "epi_DataSummary", append = T)
