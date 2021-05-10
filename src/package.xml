@@ -15,6 +15,7 @@
       configurationSheet="RunSettings"
       programName="Rscript"
       programArguments="model.R"
+      runContext="LocalOnly"
       isRunnable ="True">
       <datafeeds>
         <datafeed name="RunSettings" displayName="Run Settings" dataScope="Scenario">
@@ -36,7 +37,7 @@
                 <column name="VocShareDate" displayName="VOC case proportion date (yyyy-mm-dd)" dataType="Date" validationType="Date"/>
               </columns>
               <defaultRecords>
-                <record columns="RegressionWindow|MinimumTimestep|MaximumIteration|Breakpoints|VaccineEfficacy|ImmunityDelay|VocAdvantage|VocShare|VocShareDate" values="2020-10-10|2021-05-03|20|3|0.8|10|0.07224557|0.1737582|2021-03-11"/>
+                <record columns="MaximumIteration|Breakpoints|VaccineEfficacy|ImmunityDelay|VocAdvantage|VocShare|VocShareDate" values="20|3|0.8|10|0.07224557|0.1737582|2021-03-11"/>
               </defaultRecords>
             </datasheet>
           </datasheets>
