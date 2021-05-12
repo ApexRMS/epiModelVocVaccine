@@ -3,6 +3,7 @@
 library(rsyncrosim)
 library(dplyr)
 library(purrr)
+library(tidyr)
 library(lubridate)
 
 # Setup ----
