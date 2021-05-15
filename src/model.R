@@ -14,32 +14,16 @@ myScenario <- scenario()
 
 packagePath <- ssimEnvironment()$PackageDirectory
 
-pipeline <- datasheet(myScenario, "core_Pipeline", lookupsAsFactors = F)
 inputData <- datasheet(myScenario, name = "epi_DataSummary", lookupsAsFactors = F, optional = T) %>%
   replace_na(list(TransformerID = "Placeholder Transformer"))
 runSettings <- datasheet(myScenario, "epiModelVocVaccine_RunSettings", lookupsAsFactors = F, optional = T)
 jurisdictions <- datasheet(myScenario, "epiModelVocVaccine_RunJurisdictions", lookupsAsFactors = F, optional = T) %>% pull
 vaccinationRates <- datasheet(myScenario, "epiModelVocVaccine_VaccinationRates", lookupsAsFactors = F, optional = T)
 
-## Decide which source transformer to use ----
-
-# Find the position of the current transformer in the pipeline
-currentRunOrder <- pipeline %>%
-  filter(StageNameID == transformerName) %>%
-  pull(RunOrder)
-
-if(currentRunOrder > 1){
-  sourceTransformer <- pipeline %>%
-    filter(RunOrder == currentRunOrder - 1) %>%
-    pull(StageNameID)
-} else{
-  sourceTransformer <- inputData %>%
-    filter(Variable == "Cases - Daily") %>%
-    pull(TransformerID) %>%
-    tail(1)
-}
-
 ## Parse settings ----
+
+sourceTransformer <- ifelse(is.na(runSettings$CaseSource), "Placeholder Transformer", runSettings$CaseSource)
+
 if(length(jurisdictions) == 0)
   jurisdictions <- inputData %>%
     filter(TransformerID == sourceTransformer, Variable == "Cases - Daily") %>%
