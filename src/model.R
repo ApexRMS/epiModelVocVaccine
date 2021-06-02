@@ -83,40 +83,63 @@ source(file.path(packagePath, "voc_vaccines.R"))
     
 # Run model ----
 outputData <- 
-  try(map2_dfr(
+  map2_dfr(
     jurisdictions,
     initialCumulative,
     function(jurisdiction, initialCumulativeJurisdiction) {
+      # Set up variables to loop over number of breakpoints in case of failure
+      num_breakpoints <- runSettings$Breakpoints
+      done_fit <- F
+      output <- tibble()
+      
       # Pull out the relevant vaccination rates for this jurisdiction
       jurisdictionVaccinationRates <- vaccinationRates %>%
           filter(is.na(Jurisdictions) | Jurisdictions == jurisdiction) %>%
           pull(Rate, name = Date)
       
       # Call the function
-      voc_vaccines(
-        transformerName = transformerName,
-        jurisdiction = jurisdiction,
-        cases = inputData %>% filter(Jurisdiction == jurisdiction, Variable == "Cases - Daily"),
-        vaccination_rates = jurisdictionVaccinationRates,
-        vaccine_efficacy = runSettings$VaccineEfficacy,
-        immunity_delay = runSettings$ImmunityDelay,
-        startDate = runSettings$RegressionWindow %>% ymd,
-        endDate = runSettings$MinimumTimestep %>% ymd,
-        prediction_end_date = runSettings$MaximumTimestep %>% ymd,
-        vocAdvantage = runSettings$VocAdvantage,
-        voc_share_point = runSettings %>% pull(VocShare, name = VocShareDate),
-        num_breakpoints = runSettings$Breakpoints,
-        minimumIteration = runSettings$MinimumIteration,
-        maximumIteration = runSettings$MaximumIteration,
-        initialCumulative = initialCumulativeJurisdiction)
+      while(!done_fit & num_breakpoints >= 0)
+        tryCatch({
+          # progress report
+          print(paste0(jurisdiction, " - ", num_breakpoints))
+
+          output <- voc_vaccines(
+            transformerName = transformerName,
+            jurisdiction = jurisdiction,
+            cases = inputData %>% filter(Jurisdiction == jurisdiction, Variable == "Cases - Daily"),
+            vaccination_rates = jurisdictionVaccinationRates,
+            vaccine_efficacy = runSettings$VaccineEfficacy,
+            immunity_delay = runSettings$ImmunityDelay,
+            startDate = runSettings$RegressionWindow %>% ymd,
+            endDate = runSettings$MinimumTimestep %>% ymd,
+            prediction_end_date = runSettings$MaximumTimestep %>% ymd,
+            vocAdvantage = runSettings$VocAdvantage,
+            voc_share_point = runSettings %>% pull(VocShare, name = VocShareDate),
+            num_breakpoints = num_breakpoints,
+            minimumIteration = runSettings$MinimumIteration,
+            maximumIteration = runSettings$MaximumIteration,
+            initialCumulative = initialCumulativeJurisdiction)
+          done_fit <- TRUE},
+          error = function(e) {
+            if(grepl("Est.", e)) {
+              warning("Could not estimate ", num_breakpoints, " breakpoints for ", jurisdiction, ". Decreasing the number of breakpoints.")
+              num_breakpoints <<- num_breakpoints - 1
+            } else if(grepl("L1 > L0", e)) {
+              warning("No data found for ", jurisdiction, ". Excluding from projections.")
+              done_fit <<- TRUE
+              output <- NULL
+            } else 
+              stop("Unexpected error for ", jurisdiction, ".\n\n", e)
+          })
+        
+        # If no appropriate number of breakpoints was found
+        if(!done_fit)
+          stop("Could not estimate breakpoints for one or more jurisdictions. Please change the number of breakpoints you would like to estimate.")
+        
+        return(output)
       }) %>%
   filter(TransformerID == transformerName) %>%
   select(TransformerID, Iteration, Timestep, Variable, Jurisdiction, Value) %>%
-  as.data.frame())
-
-if(class(outputData) == "try-error")
-  case_when(
-    grepl("Est.", outputData[1]) ~ stop("Could not estimate breakpoints for one or more jurisdictions. Please change the number of breakpoints you would like to estimate."),
-    TRUE ~ stop("Unexpected error encountered while running the VOC and Vaccine model."))
+  as.data.frame()
 
 saveDatasheet(myScenario, outputData, "epi_DataSummary", append = T)
