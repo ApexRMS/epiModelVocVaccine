@@ -138,7 +138,9 @@ outputData <-
         
         return(output)
       }) %>%
-  filter(TransformerID == transformerName) %>%
+  filter(
+    TransformerID == transformerName,
+    if(runSettings$HistoricalProjection == "No") Timestep >= runSettings$MinimumTimestep else TRUE) %>%
   select(TransformerID, Iteration, Timestep, Variable, Jurisdiction, Value) %>%
   as.data.frame()
 
