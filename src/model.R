@@ -106,7 +106,7 @@ outputData <-
           output <- voc_vaccines(
             transformerName = transformerName,
             jurisdiction = jurisdiction,
-            cases = inputData %>% filter(Jurisdiction == jurisdiction, Variable == "Cases - Daily"),
+            cases = inputData %>% filter(Jurisdiction == jurisdiction, Variable == "Cases - Daily") %>% mutate(Value = Value + 1),
             vaccination_rates = jurisdictionVaccinationRates,
             vaccine_efficacy = runSettings$VaccineEfficacy,
             immunity_delay = runSettings$ImmunityDelay,
