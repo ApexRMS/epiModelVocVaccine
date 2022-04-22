@@ -15,6 +15,7 @@ myScenario <- scenario()
 packagePath <- ssimEnvironment()$PackageDirectory
 
 inputData <- datasheet(myScenario, name = "epi_DataSummary", lookupsAsFactors = F, optional = T) %>%
+  mutate(TransformerID = as.character(TransformerID)) %>%
   replace_na(list(TransformerID = "Placeholder Transformer"))
 runSettings <- datasheet(myScenario, "epiModelVocVaccine_RunSettings", lookupsAsFactors = F, optional = T)
 jurisdictions <- datasheet(myScenario, "epiModelVocVaccine_RunJurisdictions", lookupsAsFactors = F, optional = T) %>% pull
@@ -141,7 +142,7 @@ outputData <-
   filter(
     TransformerID == transformerName,
     if(runSettings$HistoricalProjection == "No") Timestep >= runSettings$MinimumTimestep else TRUE) %>%
-  select(TransformerID, Iteration, Timestep, Variable, Jurisdiction, Value) %>%
+  dplyr::select(TransformerID, Iteration, Timestep, Variable, Jurisdiction, Value) %>%
   as.data.frame()
 
 saveDatasheet(myScenario, outputData, "epi_DataSummary", append = T)

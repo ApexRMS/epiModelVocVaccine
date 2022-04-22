@@ -52,8 +52,8 @@ voc_vaccines <-
   approx=tibble(Date=names(vaccination_rates),cvr=as.numeric(vaccination_rates)) %>%
     mutate(Day=difftime(Date,startDate,units = "day") %>% unclass)
   
-  vcc.approx <- approxfun(approx %>% select(Day,cvr))
-  imm.approx <- approxfun(approx %>% select(Day,cvr) %>%
+  vcc.approx <- approxfun(approx %>% dplyr::select(Day,cvr))
+  imm.approx <- approxfun(approx %>% dplyr::select(Day,cvr) %>%
                             mutate(Day=Day+immunity_delay,cvr=cvr*vaccine_efficacy))
   
   # VOC share
@@ -127,7 +127,7 @@ voc_vaccines <-
     mutate_at(c("imm_lag","voc_lag","gr_var"),function(d)ifelse(.$Day<last_day,0,d)) %>%
     mutate_at(c("imm_lag","voc_lag"),function(d)d*(.$Day-last_day)/(prediction_end_day-last_day)) %>%
     project.s(.,imm_lag,voc_lag,gr_var) %>%
-    select(-imm_lag,-voc_lag,-gr_var,-Day,-n) %>%
+    dplyr::select(-imm_lag,-voc_lag,-gr_var,-Day,-n) %>%
     bind_rows((.) %>%
                 group_by(TransformerID,Jurisdiction,Iteration) %>%
                 arrange(Timestep) %>%
