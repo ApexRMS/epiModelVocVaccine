@@ -1,10 +1,12 @@
 # Script to wrap the voc_vaccines.R script and interface with SyncroSim
 
-library(rsyncrosim)
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(lubridate)
+## Workspace setup ----
+# Check for installed packages and install missing ones
+packagesToLoad <- c("rsyncrosim", "purrr", "lubridate", "tidyr", "dplyr", "readr", "segmented")
+packagesToInstall <- packagesToLoad[!(packagesToLoad %in% installed.packages()[,"Package"])]
+if(length(packagesToInstall)) install.packages(packagesToInstall, repos = "https://cloud.r-project.org")
+# Load packages
+lapply(packagesToLoad, library, character.only = TRUE)
 
 # Setup ----
 transformerName <- "VOC + Vaccine Model: Run Model"

@@ -1,12 +1,6 @@
 # voc_vaccines.R
 # Runs a double exponential regression model with fixed growth rate advantage to forecast cases
 
-library(tidyr)
-library(dplyr)
-library(lubridate)
-library(readr)
-library(segmented)
-
 # Setup ----------
 voc_vaccines <-
   function(
