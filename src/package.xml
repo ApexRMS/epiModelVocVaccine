@@ -11,6 +11,7 @@
       programName="Rscript"
       programArguments="model.R"
       runContext="LocalOnly"
+      isDateTimeBased="True"
       isRunnable ="True">
       <datafeeds>
         <datafeed name="RunSettings" displayName="Run Settings" dataScope="Scenario">
