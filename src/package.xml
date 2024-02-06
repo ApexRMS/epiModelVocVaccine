@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="epiModelVocVaccine" displayName="Integrates VOCs and vaccination in the Epi model" isAddOn="True" extendsPackage="epi" version="1.0.3" url="https://apexrms.github.io/epi/">
+<package name="epiModelVocVaccine" displayName="Integrates VOCs and vaccination in the Epi model" isAddOn="True" extendsPackage="epi" version="1.1.0" url="https://apexrms.github.io/epi/">
   <transformers>
     <transformer
       name="Model"

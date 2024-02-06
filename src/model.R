@@ -19,7 +19,7 @@ packagePath <- ssimEnvironment()$PackageDirectory
 inputData <- datasheet(myScenario, name = "epi_DataSummary", lookupsAsFactors = F, optional = T) %>%
   mutate(TransformerID = as.character(TransformerID)) %>%
   replace_na(list(TransformerID = "Placeholder Transformer"))
-runSettings <- datasheet(myScenario, "epiModelVocVaccine_RunSettings", lookupsAsFactors = F, optional = T)
+runSettings <- datasheet(myScenario, "epiModelVocVaccine_RunSettings", lookupsAsFactors = F, optional = T, returnInvisible = T)
 jurisdictions <- datasheet(myScenario, "epiModelVocVaccine_RunJurisdictions", lookupsAsFactors = F, optional = T) %>% pull
 vaccinationRates <- datasheet(myScenario, "epiModelVocVaccine_VaccinationRates", lookupsAsFactors = F, optional = T)
 
